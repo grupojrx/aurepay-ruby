@@ -1,4 +1,4 @@
-# RubyGems: Trusted Publisher (OIDC) ou fallback RUBYGEMS_API_KEY.
+# RubyGems Trusted Publisher (OIDC): org=grupojrx, repo=aurepay-ruby, workflow=publish.yml
 # Só publica se o SDK mudou vs latest no RubyGems.
 name: Publish RubyGems
 
@@ -50,21 +50,13 @@ jobs:
         if: steps.decide.outputs.publish == 'true'
         run: gem build aurepay.gemspec
 
-      - name: Publish to RubyGems (OIDC or API key)
+      - name: Configure RubyGems credentials (OIDC Trusted Publisher)
         if: steps.decide.outputs.publish == 'true'
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          gem install rubygems-openid --no-document || true
-          if [ -n "$RUBYGEMS_API_KEY" ]; then
-            mkdir -p ~/.gem
-            printf -- "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
-            chmod 0600 ~/.gem/credentials
-            gem push aurepay-*.gem
-          else
-            # Trusted Publisher / OIDC (rubygems.org)
-            gem push aurepay-*.gem --otp '' || gem push aurepay-*.gem
-          fi
+        uses: rubygems/configure-rubygems-credentials@v1.0.0
+
+      - name: Publish to RubyGems
+        if: steps.decide.outputs.publish == 'true'
+        run: gem push aurepay-*.gem
 
       - name: Skipped
         if: steps.decide.outputs.publish != 'true'
