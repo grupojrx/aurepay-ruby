@@ -1,0 +1,71 @@
+# RubyGems: Trusted Publisher (OIDC) ou fallback RUBYGEMS_API_KEY.
+# Só publica se o SDK mudou vs latest no RubyGems.
+name: Publish RubyGems
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Should publish?
+        id: decide
+        run: |
+          set +e
+          node scripts/should-publish.mjs
+          code=$?
+          set -e
+          if [ "$code" -eq 10 ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$code" -ne 0 ]; then
+            exit "$code"
+          fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Ruby
+        if: steps.decide.outputs.publish == 'true'
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: false
+
+      - name: Build gem
+        if: steps.decide.outputs.publish == 'true'
+        run: gem build aurepay.gemspec
+
+      - name: Publish to RubyGems (OIDC or API key)
+        if: steps.decide.outputs.publish == 'true'
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: |
+          gem install rubygems-openid --no-document || true
+          if [ -n "$RUBYGEMS_API_KEY" ]; then
+            mkdir -p ~/.gem
+            printf -- "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials
+            chmod 0600 ~/.gem/credentials
+            gem push aurepay-*.gem
+          else
+            # Trusted Publisher / OIDC (rubygems.org)
+            gem push aurepay-*.gem --otp '' || gem push aurepay-*.gem
+          fi
+
+      - name: Skipped
+        if: steps.decide.outputs.publish != 'true'
+        run: echo "Nenhuma alteração no SDK Ruby — publish ignorado."
