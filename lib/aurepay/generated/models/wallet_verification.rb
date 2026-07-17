@@ -14,28 +14,44 @@ require 'date'
 require 'time'
 
 module AurePay
-  class WalletCreate < ApiModelBase
-    attr_accessor :name
+  class WalletVerification < ApiModelBase
+    attr_accessor :status
 
-    attr_accessor :external_id
+    attr_accessor :invite_email
 
-    # CNPJ obrigatório no modo walletMode=kyc
-    attr_accessor :tax_id
+    attr_accessor :invite_phone
 
-    # E-mail do titular para convite KYC (modo kyc)
-    attr_accessor :email
+    attr_accessor :rejection
 
-    # Telefone do titular para convite KYC (modo kyc)
-    attr_accessor :phone
+    class EnumAttributeValidator
+      attr_reader :datatype
+      attr_reader :allowable_values
+
+      def initialize(datatype, allowable_values)
+        @allowable_values = allowable_values.map do |value|
+          case datatype.to_s
+          when /Integer/i
+            value.to_i
+          when /Float/i
+            value.to_f
+          else
+            value
+          end
+        end
+      end
+
+      def valid?(value)
+        !value || allowable_values.include?(value)
+      end
+    end
 
     # Attribute mapping from ruby-style variable name to JSON key.
     def self.attribute_map
       {
-        :'name' => :'name',
-        :'external_id' => :'externalId',
-        :'tax_id' => :'taxId',
-        :'email' => :'email',
-        :'phone' => :'phone'
+        :'status' => :'status',
+        :'invite_email' => :'inviteEmail',
+        :'invite_phone' => :'invitePhone',
+        :'rejection' => :'rejection'
       }
     end
 
@@ -52,11 +68,10 @@ module AurePay
     # Attribute type mapping.
     def self.openapi_types
       {
-        :'name' => :'String',
-        :'external_id' => :'String',
-        :'tax_id' => :'String',
-        :'email' => :'String',
-        :'phone' => :'String'
+        :'status' => :'String',
+        :'invite_email' => :'String',
+        :'invite_phone' => :'String',
+        :'rejection' => :'WalletVerificationRejection'
       }
     end
 
@@ -70,38 +85,32 @@ module AurePay
     # @param [Hash] attributes Model attributes in the form of hash
     def initialize(attributes = {})
       if (!attributes.is_a?(Hash))
-        fail ArgumentError, "The input argument (attributes) must be a hash in `AurePay::WalletCreate` initialize method"
+        fail ArgumentError, "The input argument (attributes) must be a hash in `AurePay::WalletVerification` initialize method"
       end
 
       # check to see if the attribute exists and convert string to symbol for hash key
       acceptable_attribute_map = self.class.acceptable_attribute_map
       attributes = attributes.each_with_object({}) { |(k, v), h|
         if (!acceptable_attribute_map.key?(k.to_sym))
-          fail ArgumentError, "`#{k}` is not a valid attribute in `AurePay::WalletCreate`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
+          fail ArgumentError, "`#{k}` is not a valid attribute in `AurePay::WalletVerification`. Please check the name to make sure it's valid. List of attributes: " + acceptable_attribute_map.keys.inspect
         end
         h[k.to_sym] = v
       }
 
-      if attributes.key?(:'name')
-        self.name = attributes[:'name']
-      else
-        self.name = nil
+      if attributes.key?(:'status')
+        self.status = attributes[:'status']
       end
 
-      if attributes.key?(:'external_id')
-        self.external_id = attributes[:'external_id']
+      if attributes.key?(:'invite_email')
+        self.invite_email = attributes[:'invite_email']
       end
 
-      if attributes.key?(:'tax_id')
-        self.tax_id = attributes[:'tax_id']
+      if attributes.key?(:'invite_phone')
+        self.invite_phone = attributes[:'invite_phone']
       end
 
-      if attributes.key?(:'email')
-        self.email = attributes[:'email']
-      end
-
-      if attributes.key?(:'phone')
-        self.phone = attributes[:'phone']
+      if attributes.key?(:'rejection')
+        self.rejection = attributes[:'rejection']
       end
     end
 
@@ -110,18 +119,6 @@ module AurePay
     def list_invalid_properties
       warn '[DEPRECATED] the `list_invalid_properties` method is obsolete'
       invalid_properties = Array.new
-      if @name.nil?
-        invalid_properties.push('invalid value for "name", name cannot be nil.')
-      end
-
-      if @name.to_s.length > 120
-        invalid_properties.push('invalid value for "name", the character length must be smaller than or equal to 120.')
-      end
-
-      if !@external_id.nil? && @external_id.to_s.length > 128
-        invalid_properties.push('invalid value for "external_id", the character length must be smaller than or equal to 128.')
-      end
-
       invalid_properties
     end
 
@@ -129,38 +126,19 @@ module AurePay
     # @return true if the model is valid
     def valid?
       warn '[DEPRECATED] the `valid?` method is obsolete'
-      return false if @name.nil?
-      return false if @name.to_s.length > 120
-      return false if !@external_id.nil? && @external_id.to_s.length > 128
+      status_validator = EnumAttributeValidator.new('String', ["invited", "submitted", "approved", "rejected", "rejectedTerminal"])
+      return false unless status_validator.valid?(@status)
       true
     end
 
-    # Custom attribute writer method with validation
-    # @param [Object] name Value to be assigned
-    def name=(name)
-      if name.nil?
-        fail ArgumentError, 'name cannot be nil'
+    # Custom attribute writer method checking allowed values (enum).
+    # @param [Object] status Object to be assigned
+    def status=(status)
+      validator = EnumAttributeValidator.new('String', ["invited", "submitted", "approved", "rejected", "rejectedTerminal"])
+      unless validator.valid?(status)
+        fail ArgumentError, "invalid value for \"status\", must be one of #{validator.allowable_values}."
       end
-
-      if name.to_s.length > 120
-        fail ArgumentError, 'invalid value for "name", the character length must be smaller than or equal to 120.'
-      end
-
-      @name = name
-    end
-
-    # Custom attribute writer method with validation
-    # @param [Object] external_id Value to be assigned
-    def external_id=(external_id)
-      if external_id.nil?
-        fail ArgumentError, 'external_id cannot be nil'
-      end
-
-      if external_id.to_s.length > 128
-        fail ArgumentError, 'invalid value for "external_id", the character length must be smaller than or equal to 128.'
-      end
-
-      @external_id = external_id
+      @status = status
     end
 
     # Checks equality by comparing each attribute.
@@ -168,11 +146,10 @@ module AurePay
     def ==(o)
       return true if self.equal?(o)
       self.class == o.class &&
-          name == o.name &&
-          external_id == o.external_id &&
-          tax_id == o.tax_id &&
-          email == o.email &&
-          phone == o.phone
+          status == o.status &&
+          invite_email == o.invite_email &&
+          invite_phone == o.invite_phone &&
+          rejection == o.rejection
     end
 
     # @see the `==` method
@@ -184,7 +161,7 @@ module AurePay
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [name, external_id, tax_id, email, phone].hash
+      [status, invite_email, invite_phone, rejection].hash
     end
 
     # Builds the object from hash
