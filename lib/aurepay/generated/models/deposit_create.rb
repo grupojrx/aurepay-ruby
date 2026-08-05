@@ -22,8 +22,6 @@ module AurePay
 
     attr_accessor :reference
 
-    attr_accessor :expiration
-
     attr_accessor :callback_url
 
     attr_accessor :customer
@@ -60,7 +58,6 @@ module AurePay
         :'method' => :'method',
         :'amount' => :'amount',
         :'reference' => :'reference',
-        :'expiration' => :'expiration',
         :'callback_url' => :'callbackUrl',
         :'customer' => :'customer',
         :'metadata' => :'metadata',
@@ -84,7 +81,6 @@ module AurePay
         :'method' => :'String',
         :'amount' => :'Integer',
         :'reference' => :'String',
-        :'expiration' => :'Time',
         :'callback_url' => :'String',
         :'customer' => :'CustomerInput',
         :'metadata' => :'Hash<String, Object>',
@@ -130,10 +126,6 @@ module AurePay
         self.reference = attributes[:'reference']
       else
         self.reference = nil
-      end
-
-      if attributes.key?(:'expiration')
-        self.expiration = attributes[:'expiration']
       end
 
       if attributes.key?(:'callback_url')
@@ -222,7 +214,6 @@ module AurePay
           method == o.method &&
           amount == o.amount &&
           reference == o.reference &&
-          expiration == o.expiration &&
           callback_url == o.callback_url &&
           customer == o.customer &&
           metadata == o.metadata &&
@@ -238,7 +229,7 @@ module AurePay
     # Calculates hash code according to all attributes.
     # @return [Integer] Hash code
     def hash
-      [method, amount, reference, expiration, callback_url, customer, metadata, splits].hash
+      [method, amount, reference, callback_url, customer, metadata, splits].hash
     end
 
     # Builds the object from hash
